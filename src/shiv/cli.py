@@ -110,10 +110,12 @@ def main(
         site_packages.mkdir(parents=True, exist_ok=True)
 
         # install deps into staged site-packages
-        pip.install(
-            ["--target", site_packages.as_posix()] + list(pip_args),
-            site_packages.as_posix(),
-        )
+        for pip_arg in pip_args:
+            # XXX: This won't work for multi-arg pip args
+            pip.install(
+                ["--target", site_packages.as_posix()] + [pip_arg],
+                site_packages.as_posix(),
+            )
 
         # if entry_point is a console script, get the callable
         if entry_point is None and console_script is not None:
