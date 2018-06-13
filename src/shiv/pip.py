@@ -42,7 +42,7 @@ def clean_pip_env() -> Generator[None, None, None]:
             pydistutils.unlink()
 
 
-def install(args: List[str]) -> None:
+def install(args: List[str], python_path: str) -> None:
     """`pip install` as a function.
 
     Accepts a list of pip arguments.
@@ -59,10 +59,14 @@ def install(args: List[str]) -> None:
     """
     with clean_pip_env():
 
+        env = os.environ.copy()
+        env['PYTHONPATH'] = python_path
+
         process = subprocess.Popen(
             [sys.executable, "-m", "pip", "--disable-pip-version-check", "install"] + args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            env=env,
         )
 
         for output in process.stdout:
