@@ -1,4 +1,5 @@
 import compileall
+import os
 import site
 import sys
 import shutil
@@ -11,11 +12,19 @@ from .environment import Environment
 from .interpreter import execute_interpreter
 
 
-def current_zipfile():
+def get_zipfile_path():
+    """Gets the path to the current zipfile, if there is one"""
+    resolved_path = Path(sys.argv[0]).resolve()
+    if zipfile.is_zipfile(resolved_path):
+        return resolved_path
+
+    return None
+
+
+def get_zipfile(path):
     """A function to vend the current zipfile, if any"""
-    if zipfile.is_zipfile(sys.argv[0]):
-        fd = open(sys.argv[0], "rb")
-        return zipfile.ZipFile(fd)
+    fd = open(path, "rb")
+    return zipfile.ZipFile(fd)
 
 
 def import_string(import_name):
@@ -86,8 +95,14 @@ def extract_site_packages(archive, target_path):
 def bootstrap():
     """Actually bootstrap our shiv environment."""
 
+    # get the path to the current zipfile
+    shiv_path = get_zipfile_path()
+
     # get a handle of the currently executing zip file
-    archive = current_zipfile()
+    archive = get_zipfile(shiv_path)
+
+    # expose to the current process the path of the zipfile
+    os.environ['SHIV_ZIPFILE_PATH'] = str(shiv_path)
 
     # create an environment object (a combination of env vars and json metadata)
     env = Environment.from_json(archive.read("environment.json").decode())
